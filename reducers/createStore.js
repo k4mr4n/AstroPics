@@ -4,6 +4,9 @@ import createLogger from 'redux-logger'
 import Config from '../config/debugSettings'
 import createSagaMiddleware from 'redux-saga'
 import R from 'ramda'
+import { autoRehydrate } from 'redux-persist'
+import RehydrationServices from '../services/rehydration_services'
+import ReduxPersist from '../config/redux_persist'
 
 // creates the store
 export default (rootReducer, rootSaga) => {
@@ -35,7 +38,17 @@ export default (rootReducer, rootSaga) => {
   enhancers.push(applyMiddleware(...middleware))
 
   /* ------------- AutoRehydrate Enhancer ------------- */
+  // add the autoRehydrate enhancer
+  if (ReduxPersist.active) {
+    enhancers.push(autoRehydrate())
+  }
+
   const store = createStore(rootReducer, compose(...enhancers))
+
+// configure persistStore and check reducer version number
+  if (ReduxPersist.active) {
+    RehydrationServices.updateReducers(store)
+  }
 
   // kick off root saga
   sagaMiddleware.run(rootSaga)
